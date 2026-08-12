@@ -36,8 +36,9 @@ jobs:
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
         
-        # Dependencies block
-        sed -i 's/^requirements =.*/requirements = python3,kivy==2.3.0,yt-dlp,certifi,openssl/' buildozer.spec
+        # CRITICAL FIX: Use kivy master link instead of 2.3.0 to clear the _clock.c python 3.10 macro clash
+        sed -i 's/^requirements =.*/requirements = python3,kivy==master,yt-dlp,certifi,openssl/' buildozer.spec
+        
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
         
         # Stable system compilation numbers
@@ -46,7 +47,7 @@ jobs:
         sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
         sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
         
-        # CRITICAL FIX: Force strict 64-bit architecture and remove default 32-bit fallback line entirely
+        # Force compilation strictly for your exact mobile hardware profile
         sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
         sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
         
