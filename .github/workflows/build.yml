@@ -1,27 +1,35 @@
-name: Build Android APK via Container Engine
+name: Build Android APK via Marketplace Toolchain
 on: [push, pull_request]
 
 jobs:
   build:
-    # Use a pre-loaded container with stable Android build tools ready to go
     runs-on: ubuntu-22.04
-    container:
-      image: docker://gandreadis/buildozer:latest
 
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Run Direct Buildozer Android Compilation
+    - name: Set up Java Development Kit
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Set up Python Engine
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install System Dependencies
       run: |
-        # Accept the pre-installed developer licenses cleanly
-        yes | sdkmanager --licenses || true
-        
-        # Package your video downloader using the container's stable architecture
-        buildozer android debug
-      env:
-        BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
-        HOME: /root
+        sudo apt-get update
+        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
+
+    - name: Compile Mobile App via Official Buildozer Action
+      uses: ArtemSBulgakov/buildozer-action@v1
+      with:
+        buildozer_version: stable
+        # Automatically passes your parameters to compile 64-bit packages directly
 
     - name: Upload Finished APK Artifact
       uses: actions/upload-artifact@v4
