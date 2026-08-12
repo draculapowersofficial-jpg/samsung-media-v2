@@ -27,37 +27,9 @@ jobs:
         pip install --upgrade pip
         pip install buildozer cython==0.29.33
 
-    - name: Generate and Tweak Buildozer Manifest
-      run: |
-        # Removed 'buildozer init' to prevent the duplicate file crash
-        
-        # Force title configuration parameters
-        sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
-        sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
-        sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
-        
-        # STABILITY ENFORCEMENT: Update version configurations completely
-        sed -i 's/^requirements =.*/requirements = python3,kivy,yt-dlp,certifi,openssl/' buildozer.spec
-        sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
-        
-        # Lock configuration values onto stable SDK/NDK frameworks
-        sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
-        sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
-        sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
-        sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
-        
-        # CRITICAL STRUCTURAL FIX: Force stable Python 3.10 allocations natively
-        sed -i 's/# python3_version =.*/python3_version = 3.10.12/' buildozer.spec
-        sed -i 's/^python3_version =.*/python3_version = 3.10.12/' buildozer.spec
-        
-        # Overwrite all platform architecture defaults for your Samsung device profile
-        sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
-        sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
-        
-        sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
-
     - name: Run Buildozer Android Compilation
       run: |
+        # Bypasses all sed text modifications to read your manual spec file directly
         yes | sdkmanager --licenses || true
         buildozer android debug
       env:
