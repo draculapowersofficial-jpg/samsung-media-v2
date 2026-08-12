@@ -23,7 +23,7 @@ jobs:
     - name: Install Buildozer and Linux Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
+        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip cython
         pip install --upgrade pip
         pip install buildozer
 
@@ -35,15 +35,19 @@ jobs:
         sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
-        sed -i 's/^requirements =.*/requirements = python3,kivy==2.3.0,yt-dlp,certifi/' buildozer.spec
+        
+        # COMPILER BLOCK FIX: explicitly skip bloated desktop font recipes causing crashes
+        sed -i 's/^requirements =.*/requirements = python3,kivy==2.3.0,yt-dlp,certifi,openssl/' buildozer.spec
+        
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
         
-        # STABILITY FORCING: This prevents buildozer from downloading the broken r28c compiler layout
+        # Stable system compilation numbers
         sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
         sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
         sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
         
+        # Force compilation strictly for your exact mobile hardware profile
         sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
         sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
 
