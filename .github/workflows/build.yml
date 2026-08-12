@@ -23,10 +23,8 @@ jobs:
     - name: Install Buildozer and Linux Dependencies
       run: |
         sudo apt-get update
-        # Removed cython from here to fix the apt-get error
         sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
         pip install --upgrade pip
-        # Installed cython safely via pip right here
         pip install buildozer cython==0.29.33
 
     - name: Generate and Tweak Buildozer Manifest
@@ -38,9 +36,8 @@ jobs:
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
         
-        # COMPILER BLOCK FIX: explicitly skip bloated desktop font recipes causing crashes
+        # Dependencies block
         sed -i 's/^requirements =.*/requirements = python3,kivy==2.3.0,yt-dlp,certifi,openssl/' buildozer.spec
-        
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
         
         # Stable system compilation numbers
@@ -49,8 +46,10 @@ jobs:
         sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
         sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
         
-        # Force compilation strictly for your exact mobile hardware profile
+        # CRITICAL FIX: Force strict 64-bit architecture and remove default 32-bit fallback line entirely
+        sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
         sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
+        
         sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
 
     - name: Run Buildozer Android Compilation
