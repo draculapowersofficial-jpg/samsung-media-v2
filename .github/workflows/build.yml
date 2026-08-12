@@ -27,39 +27,9 @@ jobs:
         pip install --upgrade pip
         pip install buildozer cython==0.29.33
 
-    - name: Generate and Tweak Buildozer Manifest
-      run: |
-        buildozer init --no-interaction
-        
-        # Modify configuration lines to force a stable SDK/NDK pairing
-        sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
-        sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
-        sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
-        
-        # Core requirements list
-        sed -i 's/^requirements =.*/requirements = python3,kivy==master,yt-dlp,certifi,openssl/' buildozer.spec
-        
-        sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
-        
-        # Stable system compilation numbers
-        sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
-        sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
-        sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
-        sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
-        
-        # CRITICAL RE-ROUTE FIXED: This line explicitly forces buildozer to lock onto stable Python 3.10
-        # and stops it from automatically downloading the broken Python 3.14 alpha version!
-        sed -i 's/# python3_version =.*/python3_version = 3.10.12/' buildozer.spec
-        sed -i 's/^python3_version =.*/python3_version = 3.10.12/' buildozer.spec
-        
-        # Force compilation strictly for your exact mobile hardware profile
-        sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
-        sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
-        
-        sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
-
     - name: Run Buildozer Android Compilation
       run: |
+        # Use our pre-configured buildozer.spec directly instead of running init
         yes | sdkmanager --licenses || true
         buildozer android debug
       env:
