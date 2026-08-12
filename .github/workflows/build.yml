@@ -25,11 +25,41 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
         pip install --upgrade pip
-        pip install buildozer cython==0.29.33
+        # CRITICAL FIX: Lock down the toolchain package engine versions 
+        # This completely strips out the automatic Python 3.14 override script
+        pip install "buildozer<=1.5.0" "cython<3.0.0" "sh==1.14.3"
+
+    - name: Generate and Tweak Buildozer Manifest
+      run: |
+        buildozer init --no-interaction
+        
+        # Setup application naming properties
+        sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
+        sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
+        sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
+        
+        # Dependencies block
+        sed -i 's/^requirements =.*/requirements = python3,kivy,yt-dlp,certifi,openssl/' buildozer.spec
+        sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
+        
+        # Lock configuration values onto stable SDK/NDK frameworks
+        sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
+        sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
+        sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
+        sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
+        
+        # STABILITY ENFORCEMENT: Force ancient python modules completely out of the compilation loop
+        sed -i 's/# python3_version =.*/python3_version = 3.10.12/' buildozer.spec
+        sed -i 's/^python3_version =.*/python3_version = 3.10.12/' buildozer.spec
+        
+        # Overwrite architecture parameters for your Samsung device profile
+        sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
+        sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
+        
+        sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
 
     - name: Run Buildozer Android Compilation
       run: |
-        # Bypasses all sed text modifications to read your manual spec file directly
         yes | sdkmanager --licenses || true
         buildozer android debug
       env:
