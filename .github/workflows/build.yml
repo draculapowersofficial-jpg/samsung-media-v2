@@ -29,14 +29,14 @@ jobs:
 
     - name: Generate and Tweak Buildozer Manifest
       run: |
-        buildozer init --no-interaction
+        # Removed 'buildozer init' to prevent the duplicate file crash
         
         # Force title configuration parameters
         sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
         
-        # STABILITY ENFORCEMENT: Remove all fallback version configurations completely
+        # STABILITY ENFORCEMENT: Update version configurations completely
         sed -i 's/^requirements =.*/requirements = python3,kivy,yt-dlp,certifi,openssl/' buildozer.spec
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
         
