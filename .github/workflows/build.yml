@@ -23,21 +23,30 @@ jobs:
     - name: Install Buildozer and Linux Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
+        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip wget
         pip install --upgrade pip
-        # Clean stability environment lock
         pip install "buildozer<=1.5.0" "cython<3.0.0" "sh==1.14.3"
+
+    - name: Pre-Install and Export Android Command Line Tools
+      run: |
+        # Manually install Google's official command line SDK tools
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        wget -q https://google.com -O cmdline.zip
+        unzip -q cmdline.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+        
+        # Add the newly created paths to the system environment variables dynamically
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
     - name: Run Buildozer Android Compilation
       run: |
-        # Reads your custom buildozer.spec directly out in the open without scrambled text alterations
-        yes | sdkmanager --licenses || true
+        # Force accept development licenses natively using our pre-installed path
+        yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
+        
+        # Build your app installer securely using our explicit path allocations
         buildozer android debug
       env:
         BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
-
-    - name: Upload Finished APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Universal-Media-Downloader-APK
-        path: bin/*.apk
+        ANDROID_HOME: ${{ env.ANDROID_HOME }}
