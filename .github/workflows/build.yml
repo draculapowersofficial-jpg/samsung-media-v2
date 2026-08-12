@@ -36,8 +36,8 @@ jobs:
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
         
-        # CRITICAL FIX: Use kivy master link instead of 2.3.0 to clear the _clock.c python 3.10 macro clash
-        sed -i 's/^requirements =.*/requirements = python3,kivy==master,yt-dlp,certifi,openssl/' buildozer.spec
+        # CRITICAL FIX: Force python3==3.10.0 to stop buildozer from downloading experimental Python 3.14
+        sed -i 's/^requirements =.*/requirements = python3==3.10.0,kivy==master,yt-dlp,certifi,openssl/' buildozer.spec
         
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
         
