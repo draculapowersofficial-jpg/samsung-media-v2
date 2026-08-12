@@ -25,13 +25,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
         pip install --upgrade pip
-        # CRITICAL FIX: Lock down the toolchain package engine versions 
-        # This completely strips out the automatic Python 3.14 override script
+        # Keep our locked, stable package layout
         pip install "buildozer<=1.5.0" "cython<3.0.0" "sh==1.14.3"
 
-    - name: Generate and Tweak Buildozer Manifest
+    - name: Tweak Existing Buildozer Manifest
       run: |
-        buildozer init --no-interaction
+        # Removed 'buildozer init' to prevent the duplicate file crash
         
         # Setup application naming properties
         sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
@@ -48,7 +47,7 @@ jobs:
         sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
         sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
         
-        # STABILITY ENFORCEMENT: Force ancient python modules completely out of the compilation loop
+        # STABILITY ENFORCEMENT: Force stable python modules
         sed -i 's/# python3_version =.*/python3_version = 3.10.12/' buildozer.spec
         sed -i 's/^python3_version =.*/python3_version = 3.10.12/' buildozer.spec
         
