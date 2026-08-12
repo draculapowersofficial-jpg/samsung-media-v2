@@ -18,22 +18,57 @@ jobs:
     - name: Set up Python Engine
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
+        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip autoconf automake libtool textinfop
         pip install --upgrade pip
-        pip install "buildozer<=1.5.0" "cython<3.0.0" "sh==1.14.3"
+        # Upgrade buildozer tools to force stable Python 3.11 recipes natively
+        pip install --upgrade buildozer cython sh
 
-    - name: Run Direct Android Compilation
+    - name: Generate and Force Clean Manifest Blueprint
       run: |
-        # Accept the pre-installed developer licenses cleanly
-        yes | sdkmanager --licenses || true
+        # Wipe out old spec conflicts completely and start clean
+        rm -f buildozer.spec
+        buildozer init --no-interaction
         
-        # CRITICAL RE-ROUTE FIXED: Swapped 'kivy==2.3.0' for 'kivy==master'
-        # This completely resolves the deep _clock.c macro error loop!
-        buildozer android debug --app-requirements="python3==3.10.12,kivy==master,yt-dlp,certifi,openssl"
+        # Inject correct app naming properties
+        sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
+        sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
+        sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
+        
+        # CRITICAL ENVIRONMENT LOCK: Force python3 to use the stable 3.11 target framework
+        sed -i 's/^requirements =.*/requirements = python3,kivy,yt-dlp,certifi,openssl/' buildozer.spec
+        sed -i 's/# python3_version =.*/python3_version = 3.11/' buildozer.spec
+        sed -i 's/^python3_version =.*/python3_version = 3.11/' buildozer.spec
+        
+        sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
+        
+        # Hardcode modern stable SDK and NDK compilation limits
+        sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
+        sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
+        sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
+        sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
+        
+        # Strict device architecture specification profile for Samsung A06
+        sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
+        sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
+        
+        sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
+
+    - name: Run Buildozer Android Compilation
+      run: |
+        yes | sdkmanager --licenses || true
+        buildozer android debug
       env:
         BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
+        # Injects strict backend shell flags to stop alternative script downloads
+        P4A_RELEASE: stable
+
+    - name: Upload Finished APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Universal-Media-Downloader-APK
+        path: bin/*.apk
