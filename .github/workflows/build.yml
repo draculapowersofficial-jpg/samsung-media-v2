@@ -29,22 +29,26 @@ jobs:
 
     - name: Generate and Tweak Buildozer Manifest
       run: |
-        buildozer init
-        # Modify configuration lines one-by-one to inject your app properties
+        buildozer init --no-interaction
+        
+        # Modify configuration lines to force a stable SDK/NDK pairing
         sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
         sed -i 's/^requirements =.*/requirements = python3,kivy==2.3.0,yt-dlp,certifi/' buildozer.spec
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
+        
+        # STABILITY FORCING: This prevents buildozer from downloading the broken r28c compiler layout
         sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
         sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
+        sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
+        
         sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
         sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
 
     - name: Run Buildozer Android Compilation
       run: |
-        # Force auto-approval of Google development tools licenses natively
         yes | sdkmanager --licenses || true
         buildozer android debug
       env:
