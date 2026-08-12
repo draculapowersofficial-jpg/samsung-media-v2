@@ -1,0 +1,57 @@
+name: Build Android APK via Buildozer Kivy Engine
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Set up Java Development Kit
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Set up Python Engine
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Buildozer and Linux Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
+        pip install --upgrade pip
+        pip install buildozer
+
+    - name: Generate and Tweak Buildozer Manifest
+      run: |
+        buildozer init
+        # Modify configuration lines one-by-one to inject your app properties
+        sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
+        sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
+        sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
+        sed -i 's/^requirements =.*/requirements = python3,kivy==2.3.0,yt-dlp,certifi/' buildozer.spec
+        sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
+        sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
+        sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
+        sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
+        sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
+        sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
+
+    - name: Run Buildozer Android Compilation
+      run: |
+        # Force auto-approval of Google development tools licenses natively
+        yes | sdkmanager --licenses || true
+        buildozer android debug
+      env:
+        BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
+
+    - name: Upload Finished APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Universal-Media-Downloader-APK
+        path: bin/*.apk
