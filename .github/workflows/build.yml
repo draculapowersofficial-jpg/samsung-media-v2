@@ -1,52 +1,30 @@
-name: Build Android APK via Buildozer Kivy Engine
+name: Build Android APK via Container Engine
 on: [push, pull_request]
 
 jobs:
   build:
+    # Use a pre-loaded container with stable Android build tools ready to go
     runs-on: ubuntu-22.04
+    container:
+      image: docker://gandreadis/buildozer:latest
 
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
-    - name: Set up Java Development Kit
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-
-    - name: Set up Python Engine
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install Buildozer and Linux Dependencies
+    - name: Run Direct Buildozer Android Compilation
       run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip wget
-        pip install --upgrade pip
-        pip install "buildozer<=1.5.0" "cython<3.0.0" "sh==1.14.3"
-
-    - name: Pre-Install and Export Android Command Line Tools
-      run: |
-        # Manually install Google's official command line SDK tools
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        wget -q https://google.com -O cmdline.zip
-        unzip -q cmdline.zip -d $HOME/android-sdk/cmdline-tools
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+        # Accept the pre-installed developer licenses cleanly
+        yes | sdkmanager --licenses || true
         
-        # Add the newly created paths to the system environment variables dynamically
-        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-    - name: Run Buildozer Android Compilation
-      run: |
-        # Force accept development licenses natively using our pre-installed path
-        yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME || true
-        
-        # Build your app installer securely using our explicit path allocations
+        # Package your video downloader using the container's stable architecture
         buildozer android debug
       env:
         BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
-        ANDROID_HOME: ${{ env.ANDROID_HOME }}
+        HOME: /root
+
+    - name: Upload Finished APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Universal-Media-Downloader-APK
+        path: bin/*.apk
