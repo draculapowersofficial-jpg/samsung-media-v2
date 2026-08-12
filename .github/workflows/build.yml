@@ -1,4 +1,4 @@
-name: Build Android APK via Marketplace Toolchain
+name: Build Android APK via Direct Engine
 on: [push, pull_request]
 
 jobs:
@@ -24,15 +24,17 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip
+        pip install --upgrade pip
+        # Installs classic stable compilers natively into the runner
+        pip install "buildozer<=1.5.0" "cython<3.0.0" "sh==1.14.3"
 
-    - name: Compile Mobile App via Official Buildozer Action
-      uses: ArtemSBulgakov/buildozer-action@v1
-      with:
-        buildozer_version: stable
-        # Automatically passes your parameters to compile 64-bit packages directly
-
-    - name: Upload Finished APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Universal-Media-Downloader-APK
-        path: bin/*.apk
+    - name: Run Direct Android Compilation
+      run: |
+        # Accept the pre-installed developer licenses cleanly
+        yes | sdkmanager --licenses || true
+        
+        # STABILITY FORCE: This explicit line forces buildozer to lock onto Python 3.10
+        # and completely blocks it from downloading the experimental Python 3.14 alpha!
+        buildozer android debug --app-requirements="python3==3.10.12,kivy==2.3.0,yt-dlp,certifi,openssl"
+      env:
+        BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
