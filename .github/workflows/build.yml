@@ -36,8 +36,8 @@ jobs:
         sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
         sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
         
-        # CRITICAL FIX: Force python3==3.10.0 to stop buildozer from downloading experimental Python 3.14
-        sed -i 's/^requirements =.*/requirements = python3==3.10.0,kivy==master,yt-dlp,certifi,openssl/' buildozer.spec
+        # CORRECT FORMAT: Clean package list without version equations
+        sed -i 's/^requirements =.*/requirements = python3,kivy==master,yt-dlp,certifi,openssl/' buildozer.spec
         
         sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
         
@@ -46,6 +46,9 @@ jobs:
         sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
         sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
         sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
+        
+        # CRITICAL RE-ROUTE: Explicitly bind the background compiler to Python 3.10 tools cleanly
+        sed -i 's/# p4a.branch =.*/p4a.branch = release-2022.12.20/' buildozer.spec
         
         # Force compilation strictly for your exact mobile hardware profile
         sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
