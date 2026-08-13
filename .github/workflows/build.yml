@@ -23,43 +23,16 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        # FIXED TYPO: Changed 'textinfop' to 'texinfo' to clear the server package error
         sudo apt-get install -y build-essential libffi-dev libltdl-dev ffmpeg git zip unzip autoconf automake libtool texinfo
         pip install --upgrade pip
         pip install --upgrade buildozer cython sh
 
-    - name: Generate and Force Clean Manifest Blueprint
-      run: |
-        rm -f buildozer.spec
-        buildozer init --no-interaction
-        
-        # Inject correct app naming properties
-        sed -i 's/^title =.*/title = Universal Media Downloader/' buildozer.spec
-        sed -i 's/^package.name =.*/package.name = unimediadownloader/' buildozer.spec
-        sed -i 's/^package.domain =.*/package.domain = org.mymediaapp/' buildozer.spec
-        
-        # Force python3 to use the stable 3.11 target framework layout
-        sed -i 's/^requirements =.*/requirements = python3,kivy,yt-dlp,certifi,openssl/' buildozer.spec
-        sed -i 's/# python3_version =.*/python3_version = 3.11/' buildozer.spec
-        sed -i 's/^python3_version =.*/python3_version = 3.11/' buildozer.spec
-        
-        sed -i 's/^android.permissions =.*/android.permissions = INTERNET/' buildozer.spec
-        
-        # Hardcode modern stable SDK and NDK compilation limits
-        sed -i 's/# android.api =.*/android.api = 33/' buildozer.spec
-        sed -i 's/# android.minapi =.*/android.minapi = 21/' buildozer.spec
-        sed -i 's/# android.ndk_api =.*/android.ndk_api = 21/' buildozer.spec
-        sed -i 's/# android.ndk =.*/android.ndk = 25b/' buildozer.spec
-        
-        # Strict device architecture specification profile for Samsung A06
-        sed -i 's/^android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
-        sed -i 's/# android.archs =.*/android.archs = arm64-v8a/' buildozer.spec
-        
-        sed -i 's/# android.accept_sdk_license =.*/android.accept_sdk_license = True/' buildozer.spec
-
     - name: Run Buildozer Android Compilation
       run: |
+        # Accept the pre-installed developer licenses cleanly
         yes | sdkmanager --licenses || true
+        
+        # Bypasses all init commands to read your manual buildozer.spec directly!
         buildozer android debug
       env:
         BUILDOZER_ALLOW_KIVY_NEW_DESIGNER: 1
