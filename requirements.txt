@@ -1,3 +1,0 @@
-kivy
-yt-dlp
-certifi
